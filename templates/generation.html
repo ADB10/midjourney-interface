@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MidJourney +</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tw-elements/dist/css/index.min.css" />
+    <script src="https://cdn.tailwindcss.com/3.2.4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="h-full">
+
+    <div class="flex w-full p-5 justify-between">
+        <h1 class="logo mr-5"><a href="/">MidJourney +</a></h1>
+        <h2 class="text-white">> {{ data.prompt }}</h2>
+    </div>
+
+    {#
+    <main id="generation" class="w-full grid gap-5 grid-cols-{{nb_col}} grid-rows-{{nb_row}}"> #}
+        <main id="generation" class="w-full p-5">
+            <div class="flex">
+                <h3 class="w-52"></h3>
+                <div class="w-full grid gap-5 grid-cols-{{nb_col}} bg-slate-900 p-5">
+                    {% for v in data.version %}
+                    <h3>{{ v }}</h3>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="flex my-5">
+
+                <h3 class="w-52">Classic</h3>
+                <div class="w-full grid gap-5 grid-cols-{{nb_col}}">
+                    {% for v in data.version %}
+                    <div id="base-{{v}}" class="">
+                        <div class="img-container">
+                            <img src="{{ url_for('static', filename='img/load.gif') }}" class="img-click">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% for r in data.ratio %}
+            <div class="flex">
+
+                <h3 class="w-52">{{ r }}</h3>
+                <div class="w-full mb-5 grid gap-5 grid-cols-{{nb_col}}">
+                    {% for v in data.version %}
+                    <div id="{{r}}-{{v}}" class="">
+                        <div class="img-container">
+                            <img src="{{ url_for('static', filename='img/load.gif') }}" class="img-click">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+
+        </main>
+
+
+        <script src="https://cdn.jsdelivr.net/npm/tw-elements/dist/js/index.min.js"></script>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

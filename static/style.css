@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+ :root {
+    --background-color1: #111;
+    --background-color2: #222;
+    --background-color3: #333;
+    --primary-color1: #eee;
+    --primary-color2: #ddd;
+    --gradient-color: linear-gradient(90deg, #8300C1 0%, #2937B7 100%);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color1);
+    height: 100%;
+}
+
+nav {
+    background-color: var(--background-color2);
+    color: var(--primary-color1);
+    height: auto;
+}
+
+nav .active {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+h1.logo {
+    background: var(--gradient-color);
+    font-size: 2rem;
+    font-weight: 800;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+#panel .box {
+    background: var(--background-color2);
+    color: var(--primary-color1);
+    position: relative;
+}
+
+#panel .box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--gradient-color);
+}
+
+#panel .box h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+#panel .box#prompt textarea {
+    background: var(--background-color3);
+    color: var(--primary-color1);
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+button.gradient {
+    display: inline;
+    background: var(--gradient-color);
+    color: var(--primary-color1);
+    border: none;
+    outline: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+button.gradient:hover {
+    letter-spacing: 2px;
+}
+
+main#generation {
+    color: var(--primary-color1);
+}
+
+main#generation .img-click {
+    cursor: pointer;
+}
+
+main#generation .img-click.clicked {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 700px;
+    transform: translate(-50%, -50%);
+    background: var(--gradient-color);
+}
+
+main#generation .img-click.clicked::before {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-color);
+}
+
+main#generation .hide-bg {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+}
