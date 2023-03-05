@@ -25,6 +25,23 @@ XPATH_WHEN_IMAGE_OPEN = '//*[@id="app-mount"]/div[2]/div[1]/div[3]/div[2]/div/di
 
 DATA = None
 
+MAP_VERSION = {
+    "v3": "--v 3",
+    "v4a": "--style 4a",
+    "v4b": "--style 4b",
+    "v4c": "--v 4",
+}         
+
+MAP_RATIO = {
+    "base": "",
+    "2:3": " --aspect 2:3",
+    "3:2": " --aspect 3:2",
+    "1:2": " --aspect 1:2",
+    "2:1": " --aspect 2:1",
+    "16:9": " --aspect 16:9",
+    "9:16": " --aspect 9:16",
+}
+
 def connect_selenium():
     driver.get("https://discord.com/login")
     input_username = WebDriverWait(driver, 10).until(
@@ -40,12 +57,6 @@ def connect_selenium():
     input_password.send_keys("/#6usVn9iwEY%96")
     button_login.click()
 
-    # time.sleep(10)
-    # button_conversation = WebDriverWait(driver, 10).until(
-    #     EC.element_to_be_clickable((By.XPATH, XPATH_CONVERSATION))
-    # )
-    # button_conversation.click()
-
 def wait_response(prompt, version, ratio):
     reponse_received = {}
     responses_needed = 0
@@ -56,9 +67,7 @@ def wait_response(prompt, version, ratio):
         for r in ratio:
             responses_needed += 1
             reponse_received[v][r] = False
-            
     all_messages = driver.find_element(By.XPATH, XPATH_OL_MESSAGES)
-    
     while responses_needed > 0:
         time.sleep(5)
         li_messages = all_messages.find_elements(By.TAG_NAME, 'li')
@@ -70,85 +79,79 @@ def wait_response(prompt, version, ratio):
                     # Si la réponse pour cette combinaison de version et de ratio n'a pas encore été reçue
                     if not reponse_received[v][r]:
                         # On construit le XPath pour l'image correspondant à cette combinaison de version et de ratio
-                        if r == 'base':
-                            filename = f"{'_'.join(prompt.split()[:3])} --v {v[1:]}"
-                            xpath_img = f'.//*[contains(text(), "{prompt} --v {v[1:]}")]'
-                        else:
-                            filename = f"{'_'.join(prompt.split()[:3])} --v {v[1:]} --aspect {r}"
-                            xpath_img = f'.//*[contains(text(), "{prompt} --v {v[1:]} --aspect {r}")]'
-                        
+                        option = f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]}"
+                        filename = f"{'_'.join(prompt.split()[:3])} {MAP_VERSION[v]}{MAP_RATIO[r]}"
+                        xpath_img = f'.//*[contains(text(), "{option}")]'
+                        print(xpath_img)
                         # On essaie de trouver l'élément <img> correspondant à cette combinaison de version et de ratio
                         try:
                             element = li.find_element(By.XPATH, xpath_img)
-                            
                             # Si on trouve l'élément <img>, on cherche son parent pour vérifier s'il est en attente ou en cours de traitement
                             elem_parent = element.find_element(By.XPATH, '..')
-
                             # print(element.text)
-                            print(elem_parent.text)
+                            # print(elem_parent.text)
+                            if f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]} -" in elem_parent.text:
+                                print(f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]} -")
+                                if "(Waiting to start)" in elem_parent.text:
+                                    break
+                                    print("Waiting to start")
+                                elif "%)" in elem_parent.text:
+                                    break
+                                    print("Processing")
+                                else:
+                                    # print('---------------------------- ready')
+                                    try:
+                                        # print(li.get_attribute('outerHTML'))
+                                        # img = li.find_element(By.XPATH, '//div[2]/img')
+                                        # //img[contains(@class, 'lazyImg-ewiNCh')]
+                                        # img = li.find_element(By.XPATH, "//img[@class='lazyImg-ewiNCh']")
+                                        # link_img = li.find_element(By.XPATH, "//div[@class='imageWrapper-oMkQl4 imageZoom-3yLCXY clickable-LksVCf lazyImgContainer-3k3gRy']")
+                                        # print(link_img.get_attribute('outerHTML'))
+                                        image_link = li.find_element(By.XPATH, ".//div[contains(@class,'mageWrapper-oMkQl4 imageZoom-3yLCXY clickable-LksVCf lazyImgContainer-3k3gRy')]//a[contains(@class,'originalLink')]").get_attribute("href")
+                                        print("image_link", image_link)
 
+                                        req = urllib.request.Request(image_link, headers={'User-Agent': 'Mozilla/5.0'})
 
+                                        # Ouvrir l'URL et sauvegarder le contenu dans le fichier local
+                                        with urllib.request.urlopen(req) as response, open(f"{filename}.png", 'wb') as out_file:
+                                            out_file.write(response.read())
 
-                            if "(Waiting to start)" in elem_parent.text:
-                                break
-                                print("Waiting to start")
-                            elif "%)" in elem_parent.text:
-                                break
-                                print("Processing")
-                            else:
-                                # print('---------------------------- ready')
-                                try:
-                                    # print(li.get_attribute('outerHTML'))
-                                    # img = li.find_element(By.XPATH, '//div[2]/img')
-                                    # //img[contains(@class, 'lazyImg-ewiNCh')]
-                                    # img = li.find_element(By.XPATH, "//img[@class='lazyImg-ewiNCh']")
-                                    # link_img = li.find_element(By.XPATH, "//div[@class='imageWrapper-oMkQl4 imageZoom-3yLCXY clickable-LksVCf lazyImgContainer-3k3gRy']")
-                                    # print(link_img.get_attribute('outerHTML'))
-                                    image_link = li.find_element(By.XPATH, ".//div[contains(@class,'mageWrapper-oMkQl4 imageZoom-3yLCXY clickable-LksVCf lazyImgContainer-3k3gRy')]//a[contains(@class,'originalLink')]").get_attribute("href")
-                                    print("image_link", image_link)
+                                        # Vérifier si le fichier existe et n'est pas vide
+                                        if os.path.isfile(f"{filename}.png") and os.path.getsize(f"{filename}.png") > 0:
+                                            print("L'image a été sauvegardée avec succès!")
+                                            shutil.move(f"{filename}.png", f"./static/img/{filename}.png")
+                                        else:
+                                            print("La sauvegarde de l'image a échoué.")
 
-                                    req = urllib.request.Request(image_link, headers={'User-Agent': 'Mozilla/5.0'})
+                                        reponse_received[v][r] = True
+                                        responses_needed -= 1
 
-                                    # Ouvrir l'URL et sauvegarder le contenu dans le fichier local
-                                    with urllib.request.urlopen(req) as response, open(f"{filename}.png", 'wb') as out_file:
-                                        out_file.write(response.read())
+                                        print(f"Image saved here ./static/img/{filename}.png")
+                                        socketio.emit('receive_image', {
+                                            'url': f"./static/img/{filename}.png", 
+                                            'version': v, 
+                                            'ratio': r
+                                        })
 
-                                    # Vérifier si le fichier existe et n'est pas vide
-                                    if os.path.isfile(f"{filename}.png") and os.path.getsize(f"{filename}.png") > 0:
-                                        print("L'image a été sauvegardée avec succès!")
-                                        shutil.move(f"{filename}.png", f"./static/img/{filename}.png")
-                                    else:
-                                        print("La sauvegarde de l'image a échoué.")
-
-                                    reponse_received[v][r] = True
-                                    responses_needed -= 1
-
-                                    socketio.emit('receive_image', {
-                                        'url': f"./static/img/{filename}.png", 
-                                        'version': v, 
-                                        'ratio': r
-                                    })
-
-                                except Exception as e:
-                                    # handle the error when the element is not found
-                                    pass
-                            
+                                    except Exception as e:
+                                        # handle the error when the element is not found
+                                        pass
+                                
                                 # On marque cette combinaison de version et de ratio comme reçue
                         except Exception as e:
                             # Si on ne trouve pas l'élément <img> correspondant à cette combinaison de version et de ratio, on continue la boucle
                             pass
-                            
-
 
 
 def process_command(version, ratio, prompt):
-    v = version[1:]
-    input_command = driver.find_element(By.XPATH, XPATH_INPUT_EMPTY)
-    if ratio == None:
-        option = f"{prompt} --v {v}"
-    else:
-        option = f"{prompt} --v {v} --aspect {ratio}"
+    # v = version[1:]
+    option = f"{prompt} {MAP_VERSION[version]}{MAP_RATIO[ratio]}"
     print(option)
+    input_command = driver.find_element(By.XPATH, XPATH_INPUT_EMPTY)
+    # if ratio == None:
+    #     option = f"{prompt} --v {v}"
+    # else:
+    #     option = f"{prompt} --v {v} --aspect {ratio}"
     input_command.send_keys("/imagine")
     time.sleep(2)
     input_command = driver.find_element(By.XPATH, XPATH_INPUT_NOT_EMPTY)
@@ -159,7 +162,8 @@ def process_command(version, ratio, prompt):
     time.sleep(2)
     input_command = driver.find_element(By.XPATH, XPATH_PROMPT_NOT_EMPTY)
     input_command.send_keys(Keys.RETURN)
-    
+
+# routes
 
 @app.route('/')
 def index():
@@ -185,7 +189,7 @@ def prompt_data(data):
     DATA = data
     time.sleep(3)
     for v in DATA["version"]:
-        process_command(v, None, DATA["prompt"])
+        process_command(v, "base", DATA["prompt"])
         for r in DATA["ratio"]:
             process_command(v, r, DATA["prompt"])
     wait_response(DATA["prompt"], DATA["version"], DATA["ratio"])

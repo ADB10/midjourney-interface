@@ -98,7 +98,7 @@ main#generation .img-click.clicked {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 700px;
+    width: 400px;
     transform: translate(-50%, -50%);
     background: var(--gradient-color);
 }
