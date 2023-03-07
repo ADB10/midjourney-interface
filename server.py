@@ -1,5 +1,6 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
+from engineio.async_drivers import gevent
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,6 +11,7 @@ import urllib.request
 import time
 import os
 import shutil
+import json
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -23,6 +25,7 @@ XPATH_PROMPT_NOT_EMPTY = '//*[@id="app-mount"]/div[2]/div[1]/div[1]/div/div[2]/d
 XPATH_OL_MESSAGES = '//*[@id="app-mount"]/div[2]/div[1]/div[1]/div/div[2]/div/div/div/div/div[2]/div[2]/main/div[1]/div/div/ol'
 XPATH_WHEN_IMAGE_OPEN = '//*[@id="app-mount"]/div[2]/div[1]/div[3]/div[2]/div/div/div/div/img'
 
+SETTINGS = json.load(open('C:\MJ_SETTINGS.json'))
 DATA = None
 
 MAP_VERSION = {
@@ -53,8 +56,8 @@ def connect_selenium():
     button_login = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.XPATH, '//*[@id="app-mount"]/div[2]/div[1]/div[1]/div/div/div/div/form/div[2]/div/div[1]/div[2]/button[2]'))
     )
-    input_username.send_keys("adrian99@free.fr")
-    input_password.send_keys("/#6usVn9iwEY%96")
+    input_username.send_keys(SETTINGS['DISCORD_USERNAME'])
+    input_password.send_keys(SETTINGS['DISCORD_PASSWORD'])
     button_login.click()
 
 def wait_response(prompt, version, ratio):
@@ -119,7 +122,7 @@ def wait_response(prompt, version, ratio):
                                         # Vérifier si le fichier existe et n'est pas vide
                                         if os.path.isfile(f"{filename}.png") and os.path.getsize(f"{filename}.png") > 0:
                                             print("L'image a été sauvegardée avec succès!")
-                                            shutil.move(f"{filename}.png", f"./static/img/{filename}.png")
+                                            shutil.move(f"{filename}.png", os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], "{filename}.png"))
                                         else:
                                             print("La sauvegarde de l'image a échoué.")
 
