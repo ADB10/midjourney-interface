@@ -16,14 +16,15 @@ import threading
 import sys
 
 if getattr(sys, 'frozen', False):
-    # we are running in a bundle
     ROOT_PATH = sys._MEIPASS
 else:
-    # we are running in a normal Python environment
     ROOT_PATH = os.getcwd()
 
+SETTINGS = json.load(open('C:\MJ_SETTINGS.json'))
+# SETTINGS['FOLDER_TO_STORE_IMAGE'] = os.path.join(ROOT_PATH, './static/images')
+# SETTINGS['FOLDER_TO_STORE_IMAGE'] = "C:/Users/AdrianBenard/Documents/development/perso/midjourney-/static/"
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=SETTINGS['FOLDER_TO_STORE_IMAGE'])
 socketio = SocketIO(app)
 driver = webdriver.Chrome()
 
@@ -35,9 +36,6 @@ XPATH_PROMPT_NOT_EMPTY = '//*[@id="app-mount"]/div[2]/div[1]/div[1]/div/div[2]/d
 XPATH_OL_MESSAGES = '//*[@id="app-mount"]/div[2]/div[1]/div[1]/div/div[2]/div/div/div/div/div[2]/div[2]/main/div[1]/div/div/ol'
 XPATH_WHEN_IMAGE_OPEN = '//*[@id="app-mount"]/div[2]/div[1]/div[3]/div[2]/div/div/div/div/img'
 
-SETTINGS = json.load(open('C:\MJ_SETTINGS.json'))
-SETTINGS['FOLDER_TO_STORE_IMAGE'] = os.path.join(ROOT_PATH, './static/images')
-SETTINGS['FOLDER_TO_STORE_IMAGE'] = './static/images'
 DATA = None
 
 THREAD_WAIT = None
@@ -137,16 +135,16 @@ def wait_response(prompt, version, ratio):
                                         # Vérifier si le fichier existe et n'est pas vide
                                         if os.path.isfile(f"{filename}.png") and os.path.getsize(f"{filename}.png") > 0:
                                             print("L'image a été sauvegardée avec succès!")
-                                            shutil.move(f"{filename}.png", os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], f"{filename}.png"))
+                                            shutil.move(f"{filename}.png", os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], f"images/{filename}.png"))
                                         else:
                                             print("La sauvegarde de l'image a échoué.")
 
                                         reponse_received[v][r] = True
                                         responses_needed -= 1
 
-                                        print(f"Image saved here {SETTINGS['FOLDER_TO_STORE_IMAGE']}/{filename}.png")
+                                        print(f"Image saved here {SETTINGS['FOLDER_TO_STORE_IMAGE']}/images/{filename}.png")
                                         socketio.emit('receive_image', {
-                                            'url': os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], f"{filename}.png"),
+                                            'url': f"./static/images/{filename}.png",
                                             'version': v, 
                                             'ratio': r
                                         })

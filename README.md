@@ -1,1 +1,1 @@
-# midjourney-
+# midjourney
