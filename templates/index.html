@@ -83,7 +83,7 @@
             <h3 class="pb-5">Prompt</h3>
             <textarea type="text w-full"></textarea>
         </div>
-        <button class="col-start-3 col-span-2 gradient" onclick="start_generation()">Lancer la génération</button>
+        <a class="col-start-3 col-span-2 gradient text-neutral-50" onclick="start_generation()" href="/generate_image">Lancer la génération</a>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/tw-elements/dist/js/index.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>

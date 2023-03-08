@@ -9,13 +9,11 @@ function start_generation() {
         version: Array.from(version).map(x => x.getAttribute('id')),
         ratio: Array.from(ratio).map(x => x.getAttribute('id')),
     });
-
-    window.location.href = "/generate_image";
+    // window.location.href = "/generate_image";
 }
 
 all_img = document.querySelectorAll(".img-click")
 
-console.log(all_img);
 CURRENT = NaN
 
 for (let index = 0; index < all_img.length; index++) {
@@ -86,10 +84,10 @@ socket.on('receive_image', function(data) {
     ratio = data.ratio;
     url = data.url;
     if (ratio == 'base') {
-        console.log("base-" + version);
+        // console.log("base-" + version);
         load_img = document.getElementById("base-" + version);
     } else {
-        console.log(ratio + "-" + version);
+        // console.log(ratio + "-" + version);
         load_img = document.getElementById(ratio + "-" + version);
     }
     console.log(load_img);

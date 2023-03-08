@@ -12,6 +12,16 @@ import time
 import os
 import shutil
 import json
+import threading
+import sys
+
+if getattr(sys, 'frozen', False):
+    # we are running in a bundle
+    ROOT_PATH = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    ROOT_PATH = os.getcwd()
+
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -26,7 +36,11 @@ XPATH_OL_MESSAGES = '//*[@id="app-mount"]/div[2]/div[1]/div[1]/div/div[2]/div/di
 XPATH_WHEN_IMAGE_OPEN = '//*[@id="app-mount"]/div[2]/div[1]/div[3]/div[2]/div/div/div/div/img'
 
 SETTINGS = json.load(open('C:\MJ_SETTINGS.json'))
+SETTINGS['FOLDER_TO_STORE_IMAGE'] = os.path.join(ROOT_PATH, './static/images')
+SETTINGS['FOLDER_TO_STORE_IMAGE'] = './static/images'
 DATA = None
+
+THREAD_WAIT = None
 
 MAP_VERSION = {
     "v3": "--v 3",
@@ -61,6 +75,7 @@ def connect_selenium():
     button_login.click()
 
 def wait_response(prompt, version, ratio):
+    print("wait_response", prompt, version, ratio)
     reponse_received = {}
     responses_needed = 0
     for v in version:
@@ -85,7 +100,7 @@ def wait_response(prompt, version, ratio):
                         option = f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]}"
                         filename = f"{'_'.join(prompt.split()[:3])} {MAP_VERSION[v]}{MAP_RATIO[r]}"
                         xpath_img = f'.//*[contains(text(), "{option}")]'
-                        print(xpath_img)
+                        # print(xpath_img)
                         # On essaie de trouver l'élément <img> correspondant à cette combinaison de version et de ratio
                         try:
                             element = li.find_element(By.XPATH, xpath_img)
@@ -94,7 +109,7 @@ def wait_response(prompt, version, ratio):
                             # print(element.text)
                             # print(elem_parent.text)
                             if f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]} -" in elem_parent.text:
-                                print(f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]} -")
+                                # print(f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]} -")
                                 if "(Waiting to start)" in elem_parent.text:
                                     break
                                     print("Waiting to start")
@@ -111,7 +126,7 @@ def wait_response(prompt, version, ratio):
                                         # link_img = li.find_element(By.XPATH, "//div[@class='imageWrapper-oMkQl4 imageZoom-3yLCXY clickable-LksVCf lazyImgContainer-3k3gRy']")
                                         # print(link_img.get_attribute('outerHTML'))
                                         image_link = li.find_element(By.XPATH, ".//div[contains(@class,'mageWrapper-oMkQl4 imageZoom-3yLCXY clickable-LksVCf lazyImgContainer-3k3gRy')]//a[contains(@class,'originalLink')]").get_attribute("href")
-                                        print("image_link", image_link)
+                                        # print("image_link", image_link)
 
                                         req = urllib.request.Request(image_link, headers={'User-Agent': 'Mozilla/5.0'})
 
@@ -122,16 +137,16 @@ def wait_response(prompt, version, ratio):
                                         # Vérifier si le fichier existe et n'est pas vide
                                         if os.path.isfile(f"{filename}.png") and os.path.getsize(f"{filename}.png") > 0:
                                             print("L'image a été sauvegardée avec succès!")
-                                            shutil.move(f"{filename}.png", os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], "{filename}.png"))
+                                            shutil.move(f"{filename}.png", os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], f"{filename}.png"))
                                         else:
                                             print("La sauvegarde de l'image a échoué.")
 
                                         reponse_received[v][r] = True
                                         responses_needed -= 1
 
-                                        print(f"Image saved here ./static/img/{filename}.png")
+                                        print(f"Image saved here {SETTINGS['FOLDER_TO_STORE_IMAGE']}/{filename}.png")
                                         socketio.emit('receive_image', {
-                                            'url': f"./static/img/{filename}.png", 
+                                            'url': os.path.join(SETTINGS['FOLDER_TO_STORE_IMAGE'], f"{filename}.png"),
                                             'version': v, 
                                             'ratio': r
                                         })
@@ -149,12 +164,8 @@ def wait_response(prompt, version, ratio):
 def process_command(version, ratio, prompt):
     # v = version[1:]
     option = f"{prompt} {MAP_VERSION[version]}{MAP_RATIO[ratio]}"
-    print(option)
+    print("process_command", option)
     input_command = driver.find_element(By.XPATH, XPATH_INPUT_EMPTY)
-    # if ratio == None:
-    #     option = f"{prompt} --v {v}"
-    # else:
-    #     option = f"{prompt} --v {v} --aspect {ratio}"
     input_command.send_keys("/imagine")
     time.sleep(2)
     input_command = driver.find_element(By.XPATH, XPATH_INPUT_NOT_EMPTY)
@@ -178,7 +189,7 @@ def historic():
 
 @app.route('/generate_image')
 def generate_image():
-    print(DATA)
+    print("generate_image", DATA)
     return render_template(
         'generation.html', 
         active={"none": True}, 
@@ -190,13 +201,14 @@ def generate_image():
 def prompt_data(data):
     global DATA
     DATA = data
+    # print("data_received", DATA)
     time.sleep(3)
     for v in DATA["version"]:
         process_command(v, "base", DATA["prompt"])
         for r in DATA["ratio"]:
             process_command(v, r, DATA["prompt"])
-    wait_response(DATA["prompt"], DATA["version"], DATA["ratio"])
-    print(DATA)
+    THREAD_WAIT = threading.Thread(target=wait_response, args=(DATA["prompt"], DATA["version"], DATA["ratio"],))
+    THREAD_WAIT.start()
 
 if __name__ == '__main__':
     connect_selenium()
