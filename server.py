@@ -57,6 +57,17 @@ MAP_RATIO = {
     "9:16": " --aspect 9:16",
 }
 
+MAP_RATIO_FILENAME = {
+    "base": "",
+    "2:3": " 2_3",
+    "3:2": " 3_2",
+    "1:2": " 1_2",
+    "2:1": " 2_1",
+    "16:9": " 16_9",
+    "9:16": " 9_16",
+}
+
+
 def connect_selenium():
     driver.get("https://discord.com/login")
     input_username = WebDriverWait(driver, 10).until(
@@ -96,7 +107,7 @@ def wait_response(prompt, version, ratio):
                     if not reponse_received[v][r]:
                         # On construit le XPath pour l'image correspondant à cette combinaison de version et de ratio
                         option = f"{prompt} {MAP_VERSION[v]}{MAP_RATIO[r]}"
-                        filename = f"{'_'.join(prompt.split()[:3])} {MAP_VERSION[v]}{MAP_RATIO[r]}"
+                        filename = f"{'_'.join(prompt.split()[:3])} {MAP_VERSION[v]}{MAP_RATIO_FILENAME[r]}"
                         xpath_img = f'.//*[contains(text(), "{option}")]'
                         # print(xpath_img)
                         # On essaie de trouver l'élément <img> correspondant à cette combinaison de version et de ratio
